@@ -1,76 +1,113 @@
-# Representational Continuity </br> for Unsupervised Continual Learning
-This is the *Pytorch Implementation* for the paper Representational Continuity for Unsupervised Continual Learning
+# テキスト指示による画像スタイル変換を導入した</br>生成リプレイによる自己教師あり継続学習  
+これは卒業論文「テキスト指示による画像スタイル変換を導入した生成リプレイによる自己教師あり継続学習」のプログラムファイル．
 
-**Authors**: [Divyam Madaan](https://dmadaan.com/), [Jaehong Yoon](https://jaehong31.github.io), [Yuanchun Li](http://yuanchun-li.github.io), [Yunxin Liu](https://yunxinliu.github.io), [Sung Ju Hwang](http://sungjuhwang.com/)
+**著者**: [若尾　正哉](http://www.mprg.cs.chubu.ac.jp/~masa21/Research/index.html)　(わかお　まさや)
 
-## Abstract
-<img align="middle" width="700" src="https://github.com/divyam3897/UCL/blob/main/concept.png">
+## 提案手法
+テキスト指示による画像スタイル変換を導入した生成リプレイによる自己教師あり継続学習法を提案する．</br>
+提案手法は，生成リプレイによる継続学習法と経験リプレイによる自己教師あり継続学習法を組み合わせ，従来手法の問題点を解決する．</br>
+提案手法では，過去のタスクで学習したデータの潜在変数を，一定数だけリプレイバッファに保存する．</br>
+保存した潜在変数を生成モデルに入力することで，過去のデータを生成し，学習に使用する．</br>
+また，生成モデルに油絵風やピクセルアート風等のスタイルを指定するテキストを入力することで，同一の潜在変数から多様な画像を生成する．</br>
 
-Continual learning (CL) aims to learn a sequence of tasks without forgetting the previously acquired knowledge. However, recent advances in continual learning are restricted to supervised continual learning (SCL) scenarios. Consequently, they are not scalable to real-world applications where the data distribution is often biased and unannotated. In this work, we focus on *unsupervised continual learning (UCL)*, where we learn the feature representations on an unlabelled sequence of tasks and show that the reliance on annotated data is not necessary for continual learning. We conduct a systematic study analyzing the learned feature representations and show that unsupervised visual representations are surprisingly more robust to catastrophic forgetting, consistently achieve better performance, and generalize better to out-of-distribution tasks than SCL. Furthermore, we find that UCL achieves a smoother loss landscape through qualitative analysis of the learned representations and learns meaningful feature representations.
-Additionally, we propose Lifelong Unsupervised Mixup (Lump), a simple yet effective technique that leverages the interpolation between the current task and previous tasks' instances to alleviate catastrophic forgetting for unsupervised representations.
+<img align="middle" width="1200" src="./my_arch.png">
 
-__Contribution of this work__
-- We attempt to bridge the gap between continual learning and representation learning and tackle the two important problems of continual learning with unlabelled data and representation learning on a sequence of tasks.
-- Systematic quantitative analysis show that UCL achieves better performance over SCL with significantly lower catastrophic forgetting on Sequential CIFAR-10, CIFAR-100 and Tiny-ImageNet. Additionally, we evaluate on out of distribution tasks and few-shot continually learning demonstrating the expressive power of unsupervised representations. 
-- We provide visualization of the representations and loss landscapes that UCL learns discriminative, human perceptual patterns and achieves a flatter and smoother loss landscape. Furthermore, we propose Lifelong Unsupervised Mixup (Lump) for UCL, which effectively alleviates catastrophic forgetting and provides better qualitative interpretations. 
-
-
-## Prerequisites
+## 動作環境
+conda環境を利用しました．</br>
+以下にDockerfileを使ったコンテナ作成から，conda環境の構築までの流れを示します．
+### イメージの作成
+プログラムファイルに移動して，
 ```
-$ pip install -r requirements.txt
+docker build ./ --force-rm --no-cache -t {image-name}
 ```
-
-## Run
-* __Split CIFAR-10__ experiment with SimSiam
+### コンテナの作成
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/simsiam_c10.yaml --ckpt_dir ./checkpoints/cifar10_results/ --hide_progress
+docker run -it --gpus all --shm-size=8G -v {自身のフォルダ}:/home/$USER --name {container-name} {image-name}
 ```
-
-* __Split CIFAR-100__ experiment with SimSiam
-
+### コンテナに移る
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/simsiam_c100.yaml --ckpt_dir ./checkpoints/cifar100_results/ --hide_progress
+docker attach {container-name}
 ```
-
-* __Split Tiny-ImageNet__ experiment with SimSiam
-
+### conda環境の作成
+プログラムファイルに移動して，
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/simsiam_tinyimagenet.yaml --ckpt_dir ./checkpoints/tinyimagenet_results/ --hide_progress
+conda env create -f environment.yml
 ```
 
-* __Split CIFAR-10__ experiment with BarlowTwins
+### conda環境の作成
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/barlow_c10.yaml --ckpt_dir ./checkpoints/cifar10_results/ --hide_progress
+conda init
+exec $SHELL #ターミナルの再起動
+conda env create -f environment.yml
+```
+（ここまでは再現済み）</br>
+あとはDiffuserをインストール．</br>
+### cv2エラー
+動かす際にcv2のエラーが出たら以下を試す．
+```
+apt-get update
+apt-get install libglib2.0-0
+```
+※「requirements-conda.txt」「requirements-container.txt」は念のために置いておきます．
+
+
+## Diffusers
+このプログラムは，[Hugging Face](https://huggingface.co/)が提供する[Diffusers](https://huggingface.co/docs/diffusers/index)を利用します．</br>
+手順に倣ってフォルダ内に[Diffusersをインストール](https://huggingface.co/docs/diffusers/installation)してください．</br>
+利用するモデルは，[Stable Diffusion v1-5](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5)です．</br>
+こちらもフォルダ内にインストールしてください．
+
+## 実行
+### CIFAR-10
+CIFAR-10の実行は，以下のコードで実行・評価まで可能です．
+```
+$ python run_c10.py
+```
+実験条件の変更は，以下のファイル内で設定できます．
+```
+configs/simsiam_c10.yaml
+```
+タスク数・クラス数の変更は，以下のファイル内で設定できます．
+```
+datasets/seq_cifar10.py
 ```
 
-* __Split CIFAR-100__ experiment with BarlowTwins
-
+### CIFAR-100
+CIFAR-100の実行は，以下のコードで実行・評価まで可能です．
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/barlow_c100.yaml --ckpt_dir ./checkpoints/cifar100_results/ --hide_progress
+$ python run_c100.py
+```
+実験条件の変更は，以下のファイル内で設定できます．
+```
+configs/simsiam_c100.yaml
+```
+タスク数・クラス数の変更は，以下のファイル内で設定できます．
+```
+datasets/seq_cifar100.py
 ```
 
-* __Split Tiny-ImageNet__ experiment with BarlowTwins
-
+### Tiny ImageNet
+Tiny ImageNetの実行は，以下のコードで実行・評価まで可能です．
 ```
-$ python main.py --data_dir ../Data/ --log_dir ../logs/ -c configs/barlow_tinyimagenet.yaml --ckpt_dir ./checkpoints/tinyimagenet_results/ --hide_progress
+$ python run_tinyimagenet.py
+```
+実験条件の変更は，以下のファイル内で設定できます．
+```
+configs/simsiam_run_tinyimagenet.yaml
+```
+タスク数・クラス数の変更は，以下のファイル内で設定できます．
+```
+datasets/seq_run_tinyimagenet.py
 ```
 
-## Contributing
-We'd love to accept your contributions to this project. Please feel free to open an issue, or submit a pull request as necessary. If you have implementations of this repository in other ML frameworks, please reach out so we may highlight them here.
-
-## Acknowledgment
-The code is build upon [aimagelab/mammoth](https://github.com/aimagelab/mammoth) and [PatrickHua/SimSiam](https://github.com/PatrickHua/SimSiam)
-
-## Citation
-If you found the provided code useful, please cite our work.
-
-```bibtex
-@inproceedings{
-  madaan2022representational,
-  title={Representational Continuity for Unsupervised Continual Learning},
-  author={Divyam Madaan and Jaehong Yoon and Yuanchun Li and Yunxin Liu and Sung Ju Hwang},
-  booktitle={International Conference on Learning Representations},
-  year={2022},
-  url={https://openreview.net/forum?id=9Hrka5PA7LW}
-}
-```
+## 実行時に作成されるフォルダ
+### ・checkpoints
+ネットワークの重みがデータセットごとに保存されます．
+### ・SAMPLING
+生成画像を可視化する場合，データセットごとに生成画像が保存されます．</br>
+生成画像の可視化の有無はconfigsに含まれる実験条件を変更するフォルダで設定できます．</br>
+### ・choice_data
+生成画像を可視化する場合，リプレイバッファに保存する潜在変数として選択される生成画像が保存されます．</br>
+生成画像の可視化の有無はconfigsに含まれる実験条件を変更するフォルダで設定できます．</br>
+## ペースとなったプログラム
+このプログラムは，[Lifelong Unsupervised Mixup (Lump)](https://github.com/divyam3897/UCL)のプログラムをベースに作成しました．

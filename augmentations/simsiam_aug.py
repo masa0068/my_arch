@@ -13,9 +13,16 @@ class SimSiamTransform():
     def __init__(self, image_size, mean_std=imagenet_mean_std, **aug_kwargs):
         image_size = 224 if image_size is None else image_size # by default simsiam use image size 224
         p_blur = 0.5 if image_size > 32 else 0 # exclude cifar
-        self.not_aug_transform = T.Compose([T.ToTensor()])
+        self.not_aug_transform = T.Compose([
+            #T.Resize((image_size*4,image_size*4)),  # 画像を指定したサイズにリサイズ
+            #T.Resize((64,64)),
+            #T.Resize((128, 128)),
+            #T.Resize((256,256)),
+            T.Resize((512,512)),
+            T.ToTensor()
+        ])
 
-        random_crop = T.RandomCrop(image_size, padding=4) if aug_kwargs['cl_default'] else T.RandomResizedCrop(image_size, scale=(0.2, 1.0))
+        random_crop = T.RandomResizedCrop(image_size, scale=(0.2, 1.0))
         self.transform = T.Compose([
             random_crop,
             T.RandomHorizontalFlip(),

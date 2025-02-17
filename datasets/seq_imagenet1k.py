@@ -87,7 +87,7 @@ class SequentialTinyImagenet(ContinualDataset):
 
     NAME = 'seq-tinyimg'
     SETTING = 'class-il'
-    N_CLASSES_PER_TASK = 10
+    N_CLASSES_PER_TASK = 5
     N_TASKS = 20
     TRANSFORM = transforms.Compose(
             [transforms.RandomCrop(64, padding=4),

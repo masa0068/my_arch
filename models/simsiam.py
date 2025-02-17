@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F 
 from torchvision.models import resnet50
 
+import wandb
+
 
 def D(p, z, version='simplified'): # negative cosine similarity
     if version == 'original':
@@ -101,11 +103,14 @@ class SimSiam(nn.Module):
     
     def forward(self, x1, x2):
 
+        feature = self.backbone(x1) #特徴量
+
         f, h = self.encoder, self.predictor
         z1, z2 = f(x1), f(x2)
         p1, p2 = h(z1), h(z2)
         L = D(p1, z2) / 2 + D(p2, z1) / 2
-        return {'loss': L}
+
+        return {'loss': L}, feature
 
 if __name__ == "__main__":
     model = SimSiam()

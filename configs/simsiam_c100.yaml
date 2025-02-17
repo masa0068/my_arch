@@ -1,16 +1,33 @@
-name: simsiam-c10-experiment-resnet18
+name: simsiam-c100-experiment-resnet18
 dataset: 
-  name: seq-cifar10
+  name: seq-cifar100
   image_size: 32
   num_workers: 4
 
 model: 
   name: simsiam
   backbone: resnet18
-  cl_model: finetune
+  cl_model: mixup
   proj_layers: 2
-  buffer_size: 256
+  buffer_size: 256 #(使用していないと思われる)
+  choose_latents : 1 #リプレイバッファに保存する潜在変数の数
 
+wandb: False
+
+diffusion:
+  save_img: True #画像保存の有無
+  save_all: False #nタスク以前のタスクも保存するか
+  split_img: 20 #一度に生成する枚数 GPUの負担軽減 　(正常に機能していない可能性)
+  gen_class_num: 20 #1つの潜在変数から生成する画像の枚数
+
+  strength_min: 0.3 #画像の変化度 下限 0.3
+  strength_max: 0.8 #画像の変化度　上限 0.5
+  guidance_scale: 5 #プロンプトの影響度 5
+  model_id: "./stable-diffusion-v1-5"
+  negative_prompt: "human, human face, human eyes, skin, eyes, nose, lips, ears, hands, fingers, anatomy, worst quality, low quality, out of focus, ugly, bad anatomy, error, blur"
+  mixup: True #実画像と生成画像をmixupするか
+
+  
 train:
   optimizer: 
     name: sgd
@@ -23,12 +40,13 @@ train:
   num_epochs: 200 # this parameter influence the lr decay
   stop_at_epoch: 200 # has to be smaller than num_epochs
   batch_size: 256
-  knn_monitor: True # knn monitor will take more time
+  knn_monitor: False # knn monitor will take more time
   knn_interval: 100
   knn_k: 200
   alpha: 0.4
-eval: # linear evaluation, False will turn off automatic evaluation after training
-  type: "accum"
+
+eval: # linear evaluation False will turn off automatic evaluation after training
+  type: "all"
   optimizer: 
     name: sgd
     weight_decay: 0
@@ -49,6 +67,12 @@ seed: null # None type for yaml file
 # two things might lead to stochastic behavior other than seed:
 # worker_init_fn from dataloader and torch.nn.functional.interpolate 
 # (keep this in mind if you want to achieve 100% deterministic)
+
+
+
+
+
+
 
 
 

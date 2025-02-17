@@ -17,33 +17,39 @@ import torch
 from augmentations import get_aug
 from PIL import Image
 
+import os
+from torchvision.transforms import InterpolationMode
 
 class SequentialCIFAR100(ContinualDataset):
 
     NAME = 'seq-cifar100'
     SETTING = 'class-il'
-    N_CLASSES_PER_TASK = 5
-    N_TASKS = 20
+    # N_CLASSES_PER_TASK = 5
+    # N_TASKS = 20
+    N_CLASSES_PER_TASK = 20
+    N_TASKS = 5
+
    
-    def get_data_loaders(self, args):
+    def get_data_loaders(self, args, nontransform=None):
+
+
         transform = get_aug(train=True, **args.aug_kwargs)
         test_transform = get_aug(train=False, train_classifier=False, **args.aug_kwargs)
 
-        train_dataset = CIFAR100(base_path() + 'CIFAR100', train=True,
-                                  download=True, transform=transform)
+        train_dataset = CIFAR100(base_path() + 'CIFAR100', train=True, download=True, transform=transform)
+        memory_dataset = CIFAR100(base_path() + 'CIFAR100', train=True, download=True, transform=test_transform)
         
-        memory_dataset = CIFAR100(base_path() + 'CIFAR100', train=True,
-                                  download=True, transform=test_transform)
         if self.args.validation:
             train_dataset, test_dataset = get_train_val(train_dataset, test_transform, self.NAME)
             memory_dataset, _ = get_train_val(memory_dataset, test_transform, self.NAME)
         else:
-            test_dataset = CIFAR100(base_path() + 'CIFAR100',train=False,
-                                   download=True, transform=test_transform)
+            test_dataset = CIFAR100(base_path() + 'CIFAR100',train=False, download=True, transform=test_transform)
 
-        train, memory, test = store_masked_loaders(train_dataset, test_dataset, memory_dataset, self)
+        train, memory, test = store_masked_loaders(train_dataset, test_dataset, memory_dataset, self)#指定されたクラス範囲に基づきデータローダを返す  
+       
         return train, memory, test
-    
+
+
     def get_transform(self, args):
         cifar_norm = [[0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2615]]
         if args.cl_default:
@@ -57,7 +63,7 @@ class SequentialCIFAR100(ContinualDataset):
         else:
             transform = transforms.Compose(
                 [transforms.ToPILImage(),
-                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3.0/4.0,4.0/3.0), interpolation=Image.BICUBIC),
+                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3.0/4.0,4.0/3.0),interpolation=InterpolationMode.BICUBIC),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(*cifar_norm)
@@ -77,3 +83,5 @@ class SequentialCIFAR100(ContinualDataset):
         train_loader = get_previous_train_loader(train_dataset, batch_size, self)
 
         return train_loader
+    
+

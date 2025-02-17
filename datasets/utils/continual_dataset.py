@@ -104,11 +104,24 @@ def store_masked_loaders(train_dataset: datasets, test_dataset: datasets, memory
     :param setting: continual learning setting
     :return: train and test loaders
     """
+
+    #train_maskとtest_maskを作成して、setting.i（現在のタスクの開始クラス番号）から setting.i + setting.N_CLASSES_PER_TASK（タスクに含まれるクラスの数）までの範囲にデータを制限
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
         np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
         np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     
+    #debug========================
+    # print(f"Task {setting.i // setting.N_CLASSES_PER_TASK + 1}:")
+    # print(f"Train mask sum: {np.sum(train_mask)}")
+    # print(f"Test mask sum: {np.sum(test_mask)}")
+    # print(f"Memory mask sum: {np.sum(train_mask)}")
+    # print(f"Current i: {setting.i}")
+    # print(f"Class range: {setting.i} - {setting.i + setting.N_CLASSES_PER_TASK - 1}")
+    # if np.sum(train_mask) == 0 or np.sum(test_mask) == 0 :
+    #     raise ValueError("No samples found for the specified class range. Please check `setting.i` and `N_CLASSES_PER_TASK` values.")
+    #debug=========================
+
     train_dataset.data = train_dataset.data[train_mask]
     test_dataset.data = test_dataset.data[test_mask]
 
@@ -119,7 +132,7 @@ def store_masked_loaders(train_dataset: datasets, test_dataset: datasets, memory
     memory_dataset.targets = np.array(memory_dataset.targets)[train_mask]
 
     train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.train.batch_size, shuffle=True, num_workers=4)
+                              batch_size=setting.args.train.batch_size, shuffle=True, num_workers=4) #setting.args.train.batch_size=256
     test_loader = DataLoader(test_dataset,
                              batch_size=setting.args.train.batch_size, shuffle=False, num_workers=4)
     memory_loader = DataLoader(memory_dataset,
@@ -131,6 +144,7 @@ def store_masked_loaders(train_dataset: datasets, test_dataset: datasets, memory
     setting.train_loader = train_loader
 
     setting.i += setting.N_CLASSES_PER_TASK
+
     return train_loader, memory_loader, test_loader
 
 

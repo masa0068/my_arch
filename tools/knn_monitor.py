@@ -9,7 +9,8 @@ from utils.metrics import mask_classes
 def knn_monitor(net, dataset, memory_data_loader, test_data_loader, device, cl_default, task_id, k=200, t=0.1, hide_progress=False):
     net.eval()
     # classes = len(memory_data_loader.dataset.classes)
-    classes = 100
+    classes = 200
+    classes = dataset.N_TASKS * dataset.N_CLASSES_PER_TASK
     total_top1 = total_top1_mask = total_top5 = total_num = 0.0
     feature_bank = []
     with torch.no_grad():
